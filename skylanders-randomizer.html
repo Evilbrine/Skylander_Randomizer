@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skylanders Randomizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fire: #ff4e1a;
+    --water: #1ab8ff;
+    --earth: #8B5E3C;
+    --air: #b8f0ff;
+    --life: #3dcd58;
+    --undead: #9b30d9;
+    --tech: #f5c518;
+    --magic: #e040fb;
+    --light: #fff176;
+    --dark: #37006e;
+    --bg: #0d0a1a;
+    --panel: #1a1530;
+    --border: #2e2650;
+    --text: #f0ecff;
+    --muted: #7a6fa0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Starfield background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(100,50,255,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(255,78,26,0.06) 0%, transparent 50%),
+      radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 80%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 25%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 55%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 45% 60%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(2px 2px at 75% 10%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 5% 90%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 92% 35%, rgba(255,255,255,0.4) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  header {
+    text-align: center;
+    padding: 2rem 0 2.5rem;
+  }
+
+  .logo {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(2.8rem, 8vw, 5rem);
+    letter-spacing: 3px;
+    line-height: 1;
+    background: linear-gradient(135deg, #ff9d00, #ff4e1a, #e040fb, #1ab8ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 2px 12px rgba(255,78,26,0.4));
+    margin-bottom: 0.3rem;
+  }
+
+  .tagline {
+    color: var(--muted);
+    font-size: 0.95rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  /* GAME SELECTOR */
+  .section-label {
+    font-family: 'Bangers', cursive;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+  }
+
+  .game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .game-btn {
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 0.9rem 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .game-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .game-btn:hover { transform: translateY(-2px); border-color: #5540a0; }
+
+  .game-btn.selected {
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(160,100,255,0.4);
+  }
+
+  .game-btn.selected::before { opacity: 1; }
+
+  /* Individual game colors */
+  .game-btn[data-game="spyro"] { --gc: #7c4dff; }
+  .game-btn[data-game="giants"] { --gc: #f57c00; }
+  .game-btn[data-game="swapforce"] { --gc: #0288d1; }
+  .game-btn[data-game="trapteam"] { --gc: #c62828; }
+  .game-btn[data-game="superchargers"] { --gc: #00838f; }
+  .game-btn[data-game="imaginators"] { --gc: #ad1457; }
+
+  .game-btn::before { background: linear-gradient(135deg, var(--gc, #7c4dff) 0%, transparent 100%); }
+  .game-btn.selected { background: linear-gradient(135deg, color-mix(in srgb, var(--gc, #7c4dff) 30%, var(--panel)), var(--panel)); border-color: var(--gc, #7c4dff); }
+
+  .game-icon { font-size: 2rem; margin-bottom: 0.3rem; display: block; }
+  .game-name {
+    font-family: 'Bangers', cursive;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    line-height: 1.2;
+    color: var(--text);
+  }
+  .game-year { font-size: 0.7rem; color: var(--muted); font-weight: 700; }
+
+  /* CONTROLS */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+  }
+
+  .randomize-btn {
+    font-family: 'Bangers', cursive;
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+    padding: 0.8rem 2.5rem;
+    background: linear-gradient(135deg, #ff4e1a, #e040fb);
+    border: none;
+    border-radius: 50px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 20px rgba(255,78,26,0.4);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .randomize-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .randomize-btn:hover { transform: scale(1.04); box-shadow: 0 6px 28px rgba(255,78,26,0.55); }
+  .randomize-btn:hover::after { opacity: 1; }
+  .randomize-btn:active { transform: scale(0.98); }
+  .randomize-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .select-all-btn {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 0.5rem 1.2rem;
+    background: transparent;
+    border: 2px solid var(--border);
+    border-radius: 50px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .select-all-btn:hover { border-color: #5540a0; color: var(--text); }
+
+  .hint {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-left: auto;
+  }
+
+  /* ROSTER GRID */
+  .roster-section { animation: fadeIn 0.4s ease; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+  .roster-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+  }
+
+  .element-card {
+    flex: 1 1 220px;
+    max-width: 280px;
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 1rem;
+    transition: border-color 0.2s;
+    animation: cardIn 0.35s ease both;
+    position: relative;
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: scale(0.92) translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .element-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .element-icon { font-size: 1.4rem; }
+
+  .element-name {
+    font-family: 'Bangers', cursive;
+    font-size: 1.2rem;
+    letter-spacing: 1.5px;
+  }
+
+  .character-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.2rem;
+  }
+
+  .character-game {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem 1rem;
+    color: var(--muted);
+  }
+
+  .empty-icon { font-size: 3.5rem; margin-bottom: 0.75rem; }
+  .empty-title { font-family: 'Bangers', cursive; font-size: 1.8rem; letter-spacing: 2px; margin-bottom: 0.5rem; }
+  .empty-text { font-size: 0.9rem; }
+
+  /* Element color theming */
+  .el-fire .element-name { color: var(--fire); }
+  .el-fire { border-color: rgba(255,78,26,0.3); }
+  .el-water .element-name { color: var(--water); }
+  .el-water { border-color: rgba(26,184,255,0.3); }
+  .el-earth .element-name { color: #c49a6c; }
+  .el-earth { border-color: rgba(139,94,60,0.4); }
+  .el-air .element-name { color: var(--air); }
+  .el-air { border-color: rgba(184,240,255,0.3); }
+  .el-life .element-name { color: var(--life); }
+  .el-life { border-color: rgba(61,205,88,0.3); }
+  .el-undead .element-name { color: #c77dff; }
+  .el-undead { border-color: rgba(155,48,217,0.4); }
+  .el-tech .element-name { color: var(--tech); }
+  .el-tech { border-color: rgba(245,197,24,0.3); }
+  .el-magic .element-name { color: var(--magic); }
+  .el-magic { border-color: rgba(224,64,251,0.3); }
+  .el-light .element-name { color: #ffe57f; }
+  .el-light { border-color: rgba(255,241,118,0.3); }
+  .el-dark .element-name { color: #b388ff; }
+  .el-dark { border-color: rgba(55,0,110,0.6); }
+
+  .series-badge {
+    display: inline-block;
+    padding: 0.12rem 0.45rem;
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.07);
+    color: var(--muted);
+    margin-left: 0.3rem;
+    vertical-align: middle;
+  }
+
+  .game-tag {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .tag-spyro { background: rgba(124,77,255,0.2); color: #b39ddb; }
+  .tag-giants { background: rgba(245,124,0,0.2); color: #ffcc80; }
+  .tag-swapforce { background: rgba(2,136,209,0.2); color: #80d8ff; }
+  .tag-trapteam { background: rgba(198,40,40,0.2); color: #ff8a80; }
+  .tag-superchargers { background: rgba(0,131,143,0.2); color: #80deea; }
+  .tag-imaginators { background: rgba(173,20,87,0.2); color: #f48fb1; }
+
+  .element-card {
+    position: relative;
+  }
+
+  .reroll-btn {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 0.85rem;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    line-height: 1;
+  }
+
+  .reroll-btn:hover {
+    background: rgba(255,255,255,0.12);
+    color: var(--text);
+    border-color: #5540a0;
+    transform: rotate(30deg) scale(1.1);
+  }
+
+  .reroll-btn:active { transform: rotate(180deg) scale(0.95); }
+
+  .card-rerolled {
+    animation: rerollPop 0.3s ease;
+  }
+
+  @keyframes rerollPop {
+    0% { transform: scale(0.93); opacity: 0.5; }
+    60% { transform: scale(1.04); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @media (max-width: 600px) {
+    .hint { display: none; }
+    .game-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  /* DIVIDER */
+  .section-divider {
+    border: none;
+    border-top: 2px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* VEHICLE SECTION */
+  .vehicle-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+  }
+
+  .vehicle-btn {
+    font-family: 'Bangers', cursive;
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+    padding: 0.8rem 2.5rem;
+    background: linear-gradient(135deg, #00838f, #0288d1);
+    border: none;
+    border-radius: 50px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 20px rgba(0,131,143,0.4);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .vehicle-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .vehicle-btn:hover { transform: scale(1.04); box-shadow: 0 6px 28px rgba(0,131,143,0.55); }
+  .vehicle-btn:hover::after { opacity: 1; }
+  .vehicle-btn:active { transform: scale(0.98); }
+
+  .vehicle-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+  }
+
+  .vehicle-card {
+    flex: 1 1 220px;
+    max-width: 300px;
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 1rem;
+    position: relative;
+    animation: cardIn 0.35s ease both;
+  }
+
+  .vehicle-card.vt-land  { border-color: rgba(245,197,24,0.35); }
+  .vehicle-card.vt-sea   { border-color: rgba(26,184,255,0.35); }
+  .vehicle-card.vt-sky   { border-color: rgba(184,240,255,0.35); }
+
+  .vehicle-type-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .vehicle-type-icon { font-size: 1.4rem; }
+
+  .vehicle-type-name {
+    font-family: 'Bangers', cursive;
+    font-size: 1.2rem;
+    letter-spacing: 1.5px;
+  }
+
+  .vt-land .vehicle-type-name  { color: var(--tech); }
+  .vt-sea  .vehicle-type-name  { color: var(--water); }
+  .vt-sky  .vehicle-type-name  { color: var(--air); }
+
+  .vehicle-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.2rem;
+  }
+
+  .vehicle-meta {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .vehicle-element-badge {
+    display: inline-block;
+    padding: 0.12rem 0.45rem;
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.07);
+    color: var(--muted);
+    margin-left: 0.3rem;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo">Skylanders Randomizer</div>
+    <div class="tagline">Assemble your portal-worthy roster</div>
+  </header>
+
+  <div class="section-label">Pick your games</div>
+  <div class="game-grid" id="gameGrid"></div>
+
+  <div class="controls">
+    <button class="randomize-btn" id="randomizeBtn" onclick="randomize()">🎲 Randomize!</button>
+    <button class="select-all-btn" id="selectAllBtn" onclick="toggleAll()">Select All</button>
+    <span class="hint">One random character per element, per selected game</span>
+  </div>
+
+  <div id="rosterOutput"></div>
+
+  <hr class="section-divider">
+
+  <div class="section-label">🏎️ Vehicle Randomizer</div>
+  <div style="color:var(--muted);font-size:0.82rem;margin-bottom:1.2rem;font-style:italic;">SuperChargers only — one random vehicle per type (Land, Sea, Sky)</div>
+
+  <div class="vehicle-controls">
+    <button class="vehicle-btn" onclick="randomizeVehicles()">🚗 Randomize Vehicles!</button>
+    <span class="hint">One random vehicle per terrain type</span>
+  </div>
+
+  <div id="vehicleOutput"></div>
+</div>
+
+<script>
+const GAMES = [
+  { id: 'spyro',         name: "Spyro's Adventure", year: '2011', icon: '🐉' },
+  { id: 'giants',        name: 'Giants',             year: '2012', icon: '🗿' },
+  { id: 'swapforce',     name: 'Swap Force',         year: '2013', icon: '🔄' },
+  { id: 'trapteam',      name: 'Trap Team',          year: '2014', icon: '🔮' },
+  { id: 'superchargers', name: 'SuperChargers',      year: '2015', icon: '🏎️' },
+  { id: 'imaginators',   name: 'Imaginators',        year: '2016', icon: '✨' },
+];
+
+const ELEMENTS = [
+  { id: 'fire',   name: 'Fire',   icon: '🔥' },
+  { id: 'water',  name: 'Water',  icon: '💧' },
+  { id: 'earth',  name: 'Earth',  icon: '🪨' },
+  { id: 'air',    name: 'Air',    icon: '💨' },
+  { id: 'life',   name: 'Life',   icon: '🌿' },
+  { id: 'undead', name: 'Undead', icon: '💀' },
+  { id: 'tech',   name: 'Tech',   icon: '⚙️' },
+  { id: 'magic',  name: 'Magic',  icon: '🪄' },
+  { id: 'light',  name: 'Light',  icon: '☀️' },
+  { id: 'dark',   name: 'Dark',   icon: '🌑' },
+];
+
+// Each character: { name, series }
+// series = 'S1' new character, 'S2'/'S3'/'S4' repose, 'Giant', 'Swapper', 'TrapMaster', 'SuperCharger', 'Sensei', 'Villain'
+const CHARACTERS = {
+  fire: {
+    spyro:         [
+      {name:'Flameslinger', series:'S1'}, {name:'Eruptor', series:'S1'},
+      {name:'Sunburn', series:'S1'}, {name:'Ignitor', series:'S1'},
+    ],
+    giants:        [
+      {name:'Hot Head', series:'Giant'}, {name:'Hot Dog', series:'S1'},
+      {name:'Flameslinger', series:'S2'}, {name:'Eruptor', series:'S2'}, {name:'Ignitor', series:'S2'}, {name:'Eruptor', series:'Lightcore'},
+    ],
+    swapforce:     [
+      {name:'Blast Zone', series:'Swapper'}, {name:'Fire Kraken', series:'Swapper'},
+      {name:'Fryno', series:'S1'}, {name:'Smolderdash', series:'S1'},
+      {name:'Fire Bone Hot Dog', series:'S2'}, {name:'Lava Barf Eruptor', series:'S3'}, {name:'Smolderdash', series:'Lightcore'},
+    ],
+    trapteam:      [
+      {name:'Wildfire', series:'TrapMaster'}, {name:'Ka-Boom', series:'TrapMaster'},
+      {name:'Torch', series:'S1'}, {name:'Trail Blazer', series:'S1'},
+      {name:'Hog Wild Fryno', series:'S2'}, {name:'Small Fry', series:'Mini'}, {name:'Weeruptor', series:'Mini'},
+    ],
+    superchargers: [
+      {name:'Spitfire', series:'SuperCharger'}, {name:'Lava Lance Eruptor', series:'SuperCharger'},
+      {name:'Hammer Slam Bowser', series:'SuperCharger'},
+    ],
+    imaginators:   [
+      {name:'Ember', series:'Sensei'}, {name:'Tae Kwon Crow', series:'Sensei/Villain'},
+      {name:'Flare Wolf', series:'Sensei'},
+    ],
+  },
+  water: {
+    spyro:         [
+      {name:'Gill Grunt', series:'S1'}, {name:'Zap', series:'S1'},
+      {name:'Wham-Shell', series:'S1'}, {name:'Slam Bam', series:'S1'},
+    ],
+    giants:        [
+      {name:'Thumpback', series:'Giant'}, {name:'Chill', series:'S1'},
+      {name:'Gill Grunt', series:'S2'}, {name:'Zap', series:'S2'}, {name:'Slam Bam', series:'S2'}, {name:'Chill', series:'Lightcore'},
+    ],
+    swapforce:     [
+      {name:'Wash Buckler', series:'Swapper'}, {name:'Freeze Blade', series:'Swapper'},
+      {name:'Rip Tide', series:'S1'}, {name:'Punk Shock', series:'S1'},
+      {name:'Blizzard Chill', series:'S2'}, {name:'Anchors Away Gill Grunt', series:'S3'}, {name:'Wham-Shell', series:'Lightcore'},
+    ],
+    trapteam:      [
+      {name:'Snap Shot', series:'TrapMaster'}, {name:'Lob-Star', series:'TrapMaster'},
+      {name:'Echo', series:'S1'}, {name:'Flip Wreck', series:'S1'},
+      {name:'Tidal Wave Gill Grunt', series:'S4'}, {name:'Gill Runt', series:'Mini'}, {name:'Thumpling', series:'Mini'},
+    ],
+    superchargers: [
+      {name:'Dive-Clops', series:'SuperCharger'}, {name:'Deep Dive Gill Grunt', series:'SuperCharger'},
+    ],
+    imaginators:   [
+      {name:'King Pen', series:'Sensei'}, {name:'Tidepool', series:'Sensei'},
+      {name:'Grave Clobber', series:'Sensei/Villain'},
+    ],
+  },
+  earth: {
+    spyro:         [
+      {name:'Prism Break', series:'S1'}, {name:'Bash', series:'S1'},
+      {name:'Dino-Rang', series:'S1'}, {name:'Terrafin', series:'S1'},
+    ],
+    giants:        [
+      {name:'Crusher', series:'Giant'}, {name:'Flashwing', series:'S1'},
+      {name:'Prism Break', series:'S2'}, {name:'Bash', series:'S2'}, {name:'Terrafin', series:'S2'}, {name:'Prism Break', series:'Lightcore'},
+    ],
+    swapforce:     [
+      {name:'Rubble Rouser', series:'Swapper'}, {name:'Doom Stone', series:'Swapper'},
+      {name:'Slobber Tooth', series:'S1'}, {name:'Scorp', series:'S1'},
+      {name:'Hyper Beam Prism Break', series:'S3'}, {name:'Knockout Terrafin', series:'S3'}, {name:'Flashwing', series:'Lightcore'},
+    ],
+    trapteam:      [
+      {name:'Wallop', series:'TrapMaster'}, {name:'Head Rush', series:'TrapMaster'},
+      {name:'Fist Bump', series:'S1'}, {name:'Rocky Roll', series:'S1'},
+      {name:'Terrabite', series:'Mini'}, {name:'Bop', series:'Mini'},
+    ],
+    superchargers: [
+      {name:'Smash Hit', series:'SuperCharger'}, {name:'Shark Shooter Terrafin', series:'SuperCharger'},
+    ],
+    imaginators:   [
+      {name:'Tri-Tip', series:'Sensei'}, {name:'Golden Queen', series:'Sensei/Villain'},
+      {name:'Barbella', series:'Sensei'},
+    ],
+  },
+  air: {
+    spyro:         [
+      {name:'Whirlwind', series:'S1'}, {name:'Lightning Rod', series:'S1'},
+      {name:'Sonic Boom', series:'S1'}, {name:'Warnado', series:'S1'},
+    ],
+    giants:        [
+      {name:'Swarm', series:'Giant'}, {name:'Jet-Vac', series:'S1'},
+      {name:'Whirlwind', series:'S2'}, {name:'Lightning Rod', series:'S2'}, {name:'Sonic Boom', series:'S2'}, {name:'Jet-Vac', series:'Lightcore'},
+    ],
+    swapforce:     [
+      {name:'Boom Jet', series:'Swapper'}, {name:'Free Ranger', series:'Swapper'},
+      {name:'Pop Thorn', series:'S1'}, {name:'Scratch', series:'S1'},
+      {name:'Turbo Jet-Vac', series:'S2'}, {name:'Horn Blast Whirlwind', series:'S3'}, {name:'Warnado', series:'Lightcore'},
+    ],
+    trapteam:      [
+      {name:'Gusto', series:'TrapMaster'}, {name:'Thunderbolt', series:'TrapMaster'},
+      {name:'Blades', series:'S1'}, {name:'Fling Kong', series:'S1'},
+      {name:'Full Blast Jet-Vac', series:'S3'}, {name:'Pet-Vac', series:'Mini'}, {name:'Breeze', series:'Mini'},
+    ],
+    superchargers: [
+      {name:'Stormblade', series:'SuperCharger'}, {name:'Hurricane Jet-Vac', series:'SuperCharger'},
+    ],
+    imaginators:   [
+      {name:'Bad Juju', series:'Sensei/Villain'}, {name:'Air Strike', series:'Sensei'},
+      {name:'Wild Storm', series:'Sensei'},
+    ],
+  },
+  life: {
+    spyro:         [
+      {name:'Stealth Elf', series:'S1'}, {name:'Stump Smash', series:'S1'},
+      {name:'Zook', series:'S1'}, {name:'Camo', series:'S1'},
+    ],
+    giants:        [
+      {name:'Tree Rex', series:'Giant'}, {name:'Shroomboom', series:'S1'},
+      {name:'Stealth Elf', series:'S2'}, {name:'Stump Smash', series:'S2'}, {name:'Zook', series:'S2'}, {name:'Shroomboom', series:'Lightcore'},
+    ],
+    swapforce:     [
+      {name:'Stink Bomb', series:'Swapper'}, {name:'Grilla Drilla', series:'Swapper'},
+      {name:'Zoo Lou', series:'S1'}, {name:'Bumble Blast', series:'S1'},
+      {name:'Thorn Horn Camo', series:'S2'}, {name:'Ninja Stealth Elf', series:'S3'}, {name:'Bumble Blast', series:'Lightcore'},
+    ],
+    trapteam:      [
+      {name:'Tuff Luck', series:'TrapMaster'}, {name:'Bushwhack', series:'TrapMaster'},
+      {name:'Food Fight', series:'S1'}, {name:'High Five', series:'S1'},
+      {name:'Sure Shot Shroomboom', series:'S2'}, {name:'Whisper Elf', series:'Mini'}, {name:'Barkley', series:'Mini'},
+    ],
+    superchargers: [
+      {name:'Super Shot Stealth Elf', series:'SuperCharger'}, {name:'Thrillipede', series:'SuperCharger'},
+      {name:'Turbo Charge Donkey Kong', series:'SuperCharger'},
+    ],
+    imaginators:   [
+      {name:'Boom Bloom', series:'Sensei'}, {name:'Ambush', series:'Sensei'},
+      {name:'Chompy Mage', series:'Sensei/Villain'}, {name:'Crash Bandicoot', series:'Sensei'},
+    ],
+  },
+  undead: {
+    spyro:         [
+      {name:'Cynder', series:'S1'}, {name:'Ghost Roaster', series:'S1'},
+      {name:'Hex', series:'S1'}, {name:'Chop Chop', series:'S1'},
+    ],
+    giants:        [
+      {name:'Eye-Brawl', series:'Giant'}, {name:'Fright Rider', series:'S1'},
+      {name:'Cynder', series:'S2'}, {name:'Hex', series:'S2'}, {name:'Chop Chop', series:'S2'}, {name:'Hex', series:'Lightcore'},
+    ],
+    swapforce:     [
+      {name:'Night Shift', series:'Swapper'}, {name:'Rattle Shake', series:'Swapper'},
+      {name:'Roller Brawl', series:'S1'}, {name:'Grim Creeper', series:'S1'},
+      {name:'Phantom Cynder', series:'S3'}, {name:'Twin Blade Chop Chop', series:'S3'}, {name:'Grim Creeper', series:'Lightcore'},
+    ],
+    trapteam:      [
+      {name:'Krypt King', series:'TrapMaster'}, {name:'Short Cut', series:'TrapMaster'},
+      {name:'Funny Bone', series:'S1'}, {name:'Bat Spin', series:'S1'},
+      {name:'Hijinx', series:'Mini'}, {name:'Eye Small', series:'Mini'},
+    ],
+    superchargers: [
+      {name:'Fiesta', series:'SuperCharger'}, {name:'Bone Bash Roller Brawl', series:'SuperCharger'},
+    ],
+    imaginators:   [
+      {name:'Chopscotch', series:'Sensei'}, {name:'Pit Boss', series:'Sensei'},
+      {name:'Wolfgang', series:'Sensei/Villain'},
+    ],
+  },
+  tech: {
+    spyro:         [
+      {name:'Trigger Happy', series:'S1'}, {name:'Drobot', series:'S1'},
+      {name:'Drill Sergeant', series:'S1'}, {name:'Boomer', series:'S1'},
+    ],
+    giants:        [
+      {name:'Bouncer', series:'Giant'}, {name:'Sprocket', series:'S1'},
+      {name:'Trigger Happy', series:'S2'}, {name:'Drobot', series:'S2'}, {name:'Drill Sergeant', series:'S2'}, {name:'Drobot', series:'Lightcore'},
+    ],
+    swapforce:     [
+      {name:'Magna Charge', series:'Swapper'}, {name:'Spy Rise', series:'Swapper'},
+      {name:'Countdown', series:'S1'}, {name:'Wind-Up', series:'S1'},
+      {name:'Heavy Duty Sprocket', series:'S2'}, {name:'Big Bang Trigger Happy', series:'S3'},
+    ],
+    trapteam:      [
+      {name:'Jawbreaker', series:'TrapMaster'}, {name:'Gearshift', series:'TrapMaster'},
+      {name:'Chopper', series:'S1'}, {name:'Tread Head', series:'S1'},
+      {name:'Trigger Snappy', series:'Mini'}, {name:'Drobit', series:'Mini'},
+    ],
+    superchargers: [
+      {name:'High Volt', series:'SuperCharger'}, {name:'Double Dare Trigger Happy', series:'SuperCharger'},
+    ],
+    imaginators:   [
+      {name:'Ro-Bow', series:'Sensei'}, {name:'Chain Reaction', series:'Sensei'},
+      {name:'Dr. Krankcase', series:'Sensei/Villain'}, {name:'Dr. Neo Cortex', series:'Sensei'},
+    ],
+  },
+  magic: {
+    spyro:         [
+      {name:'Spyro', series:'S1'}, {name:'Double Trouble', series:'S1'},
+      {name:'Voodood', series:'S1'}, {name:'Wrecking Ball', series:'S1'},
+    ],
+    giants:        [
+      {name:'Ninjini', series:'Giant'}, {name:'Pop Fizz', series:'S1'},
+      {name:'Spyro', series:'S2'}, {name:'Double Trouble', series:'S2'}, {name:'Wrecking Ball', series:'S2'}, {name:'Pop Fizz', series:'Lightcore'},
+    ],
+    swapforce:     [
+      {name:'Hoot Loop', series:'Swapper'}, {name:'Trap Shadow', series:'Swapper'},
+      {name:'Dune Bug', series:'S1'}, {name:'Star Strike', series:'S1'},
+      {name:'Super Gulp Pop Fizz', series:'S2'}, {name:'Mega Ram Spyro', series:'S3'}, {name:'Star Strike', series:'Lightcore'},
+    ],
+    trapteam:      [
+      {name:'Blastermind', series:'TrapMaster'}, {name:'Enigma', series:'TrapMaster'},
+      {name:'Deja Vu', series:'S1'}, {name:'Cobra Cadabra', series:'S1'},
+      {name:'Fizzy Frenzy Pop Fizz', series:'S3'}, {name:'Spry', series:'Mini'}, {name:'Mini Jini', series:'Mini'},
+    ],
+    superchargers: [
+      {name:'Splat', series:'SuperCharger'}, {name:'Big Bubble Pop Fizz', series:'SuperCharger'},
+    ],
+    imaginators:   [
+      {name:'Buckshot', series:'Sensei'}, {name:'Mysticat', series:'Sensei'},
+      {name:'Pain-Yatta', series:'Sensei/Villain'},
+    ],
+  },
+  light: {
+    spyro:         [],
+    giants:        [],
+    swapforce:     [],
+    trapteam:      [
+      {name:'Knight Light', series:'TrapMaster'}, {name:'Spotlight', series:'S1'},
+    ],
+    superchargers: [
+      {name:'Astroblast', series:'SuperCharger'},
+    ],
+    imaginators:   [
+      {name:'Blaster-Tron', series:'Sensei/Villain'}, {name:'Aurora', series:'Sensei'},
+    ],
+  },
+  dark: {
+    spyro:         [],
+    giants:        [],
+    swapforce:     [],
+    trapteam:      [
+      {name:'Knight Mare', series:'TrapMaster'}, {name:'Blackout', series:'S1'},
+    ],
+    superchargers: [
+      {name:'Nightfall', series:'SuperCharger'},
+    ],
+    imaginators:   [
+      {name:'Starcast', series:'Sensei'}, {name:'Hood Sickle', series:'Sensei/Villain'},
+    ],
+  },
+};
+
+const SERIES_LABEL = {
+  'S1': 'Series 1', 'S2': 'Series 2', 'S3': 'Series 3', 'S4': 'Series 4',
+  'Giant': 'Giant', 'Swapper': 'Swapper', 'TrapMaster': 'Trap Master',
+  'SuperCharger': 'SuperCharger', 'Sensei': 'Sensei', 'Sensei/Villain': 'Sensei/Villain',
+};
+
+let selectedGames = new Set();
+// Stores { elId -> { chosen, pool } } for the current roster
+let currentRoster = {};
+
+// Build game buttons
+const gameGrid = document.getElementById('gameGrid');
+GAMES.forEach(game => {
+  const btn = document.createElement('button');
+  btn.className = 'game-btn';
+  btn.dataset.game = game.id;
+  btn.innerHTML = `<span class="game-icon">${game.icon}</span><div class="game-name">${game.name}</div><div class="game-year">${game.year}</div>`;
+  btn.addEventListener('click', () => toggleGame(game.id, btn));
+  gameGrid.appendChild(btn);
+});
+
+function toggleGame(id, btn) {
+  if (selectedGames.has(id)) {
+    selectedGames.delete(id);
+    btn.classList.remove('selected');
+  } else {
+    selectedGames.add(id);
+    btn.classList.add('selected');
+  }
+  updateSelectAllBtn();
+}
+
+function updateSelectAllBtn() {
+  const btn = document.getElementById('selectAllBtn');
+  btn.textContent = selectedGames.size === GAMES.length ? 'Deselect All' : 'Select All';
+}
+
+function toggleAll() {
+  if (selectedGames.size === GAMES.length) {
+    selectedGames.clear();
+    document.querySelectorAll('.game-btn').forEach(b => b.classList.remove('selected'));
+  } else {
+    GAMES.forEach(g => selectedGames.add(g.id));
+    document.querySelectorAll('.game-btn').forEach(b => b.classList.add('selected'));
+  }
+  updateSelectAllBtn();
+}
+
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function getPool(elId) {
+  const games = [...selectedGames];
+  const pool = [];
+  games.forEach(gid => {
+    (CHARACTERS[elId][gid] || []).forEach(c => pool.push({ name: c.name, series: c.series, game: gid }));
+  });
+  // deduplicate by name (keep first appearance = earliest game)
+  const seen = {};
+  return pool.filter(c => seen[c.name] ? false : (seen[c.name] = true));
+}
+
+function buildCard(el, chosen, pool, delay = 0) {
+  const gameName = GAMES.find(g => g.id === chosen.game)?.name || '';
+  const seriesLabel = SERIES_LABEL[chosen.series] || chosen.series;
+  const hasAlts = pool.length > 1;
+  return `
+    <div class="element-card el-${el.id}" id="card-${el.id}" style="animation-delay:${delay}s">
+      ${hasAlts ? `<button class="reroll-btn" title="Reroll ${el.name}" onclick="rerollSlot('${el.id}')">↻</button>` : ''}
+      <div class="element-header">
+        <span class="element-icon">${el.icon}</span>
+        <span class="element-name">${el.name}</span>
+      </div>
+      <div class="character-name" id="name-${el.id}">${chosen.name}</div>
+      <div class="character-game" id="game-${el.id}">
+        <span class="game-tag tag-${chosen.game}">${gameName}</span>
+        <span class="series-badge">${seriesLabel}</span>
+      </div>
+    </div>`;
+}
+
+function rerollSlot(elId) {
+  const entry = currentRoster[elId];
+  if (!entry || entry.pool.length <= 1) return;
+
+  let newChosen;
+  let tries = 0;
+  do {
+    newChosen = pick(entry.pool);
+    tries++;
+  } while (newChosen.name === entry.chosen.name && tries < 10);
+
+  entry.chosen = newChosen;
+
+  const card = document.getElementById(`card-${elId}`);
+  if (!card) return;
+  const gameName = GAMES.find(g => g.id === newChosen.game)?.name || '';
+  const seriesLabel = SERIES_LABEL[newChosen.series] || newChosen.series;
+  card.querySelector(`#name-${elId}`).textContent = newChosen.name;
+  card.querySelector(`#game-${elId}`).innerHTML = `<span class="game-tag tag-${newChosen.game}">${gameName}</span><span class="series-badge">${seriesLabel}</span>`;
+  card.classList.remove('card-rerolled');
+  void card.offsetWidth;
+  card.classList.add('card-rerolled');
+}
+
+function randomize() {
+  const output = document.getElementById('rosterOutput');
+
+  if (selectedGames.size === 0) {
+    output.innerHTML = `<div class="roster-grid"><div class="empty-state"><div class="empty-icon">🎮</div><div class="empty-title">No games selected!</div><div class="empty-text">Pick at least one game above to begin.</div></div></div>`;
+    currentRoster = {};
+    return;
+  }
+
+  currentRoster = {};
+  let cards = '';
+
+  ELEMENTS.forEach((el, i) => {
+    const pool = getPool(el.id);
+    if (pool.length === 0) return;
+
+    const chosen = pick(pool);
+    currentRoster[el.id] = { chosen, pool };
+    cards += buildCard(el, chosen, pool, i * 0.05);
+  });
+
+  if (!cards) {
+    cards = `<div class="empty-state"><div class="empty-icon">😶</div><div class="empty-title">No characters found</div><div class="empty-text">The selected games have no data for these elements.</div></div>`;
+  }
+
+  output.innerHTML = `<div class="roster-section"><div class="section-label" style="margin-bottom:1rem">Your Roster</div><div class="roster-grid">${cards}</div></div>`;
+}
+// ── VEHICLE RANDOMIZER ──────────────────────────────────────────────────────
+
+const VEHICLE_TYPES = [
+  { id: 'land', name: 'Land', icon: '🏎️' },
+  { id: 'sea',  name: 'Sea',  icon: '🚤' },
+  { id: 'sky',  name: 'Sky',  icon: '✈️' },
+];
+
+// Each vehicle: { name, driver, element }
+const VEHICLES = {
+  land: [
+    { name: 'Hot Streak',        driver: 'Spitfire',                   element: 'Fire'   },
+    { name: 'Burn-Cycle',        driver: 'Lava Lance Eruptor',         element: 'Fire'   },
+    { name: 'Shark Tank',        driver: 'Shark Shooter Terrafin',     element: 'Earth'  },
+    { name: 'Thump Truck',       driver: 'Smash Hit',                  element: 'Earth'  },
+    { name: 'Gold Rusher',       driver: 'Double Dare Trigger Happy',  element: 'Tech'   },
+    { name: 'Shield Striker',    driver: 'High Volt',                  element: 'Tech'   },
+    { name: 'Barrel Blaster',    driver: 'Turbo Charge Donkey Kong',   element: 'Tech'   },
+    { name: 'Tomb Buggy',        driver: 'Bone Bash Roller Brawl',     element: 'Undead' },
+    { name: 'Crypt Crusher',     driver: 'Fiesta',                     element: 'Undead' },
+  ],
+  sea: [
+    { name: 'Reef Ripper',       driver: 'Deep Dive Gill Grunt',       element: 'Water'  },
+    { name: 'Dive Bomber',       driver: 'Dive-Clops',                 element: 'Water'  },
+    { name: 'Splatter Splasher', driver: 'Splat',                      element: 'Magic'  },
+    { name: 'Soda Skimmer',      driver: 'Big Bubble Pop Fizz',        element: 'Magic'  },
+    { name: 'Sea Shadow',        driver: 'Nightfall',                  element: 'Dark'   },
+  ],
+  sky: [
+    { name: 'Sky Slicer',        driver: 'Stormblade',                 element: 'Air'    },
+    { name: 'Jet Stream',        driver: 'Hurricane Jet-Vac',          element: 'Air'    },
+    { name: 'Clown Cruiser',     driver: 'Hammer Slam Bowser',         element: 'Air'    },
+    { name: 'Stealth Stinger',   driver: 'Super Shot Stealth Elf',     element: 'Life'   },
+    { name: 'Buzz Wing',         driver: 'Thrillipede',                element: 'Life'   },
+    { name: 'Sun Runner',        driver: 'Astroblast',                 element: 'Light'  },
+  ],
+};
+
+let currentVehicles = {};
+
+function buildVehicleCard(type, chosen, pool, delay = 0) {
+  const hasAlts = pool.length > 1;
+  return `
+    <div class="vehicle-card vt-${type.id}" id="vccard-${type.id}" style="animation-delay:${delay}s">
+      ${hasAlts ? `<button class="reroll-btn" title="Reroll ${type.name} vehicle" onclick="rerollVehicle('${type.id}')">↻</button>` : ''}
+      <div class="vehicle-type-header">
+        <span class="vehicle-type-icon">${type.icon}</span>
+        <span class="vehicle-type-name">${type.name}</span>
+      </div>
+      <div class="vehicle-name" id="vcname-${type.id}">${chosen.name}</div>
+      <div class="vehicle-meta" id="vcmeta-${type.id}">
+        <span>${chosen.driver}</span>
+        <span class="vehicle-element-badge">${chosen.element}</span>
+      </div>
+    </div>`;
+}
+
+function rerollVehicle(typeId) {
+  const entry = currentVehicles[typeId];
+  if (!entry || entry.pool.length <= 1) return;
+
+  let next;
+  let tries = 0;
+  do {
+    next = pick(entry.pool);
+    tries++;
+  } while (next.name === entry.chosen.name && tries < 10);
+
+  entry.chosen = next;
+
+  const card = document.getElementById(`vccard-${typeId}`);
+  if (!card) return;
+  card.querySelector(`#vcname-${typeId}`).textContent = next.name;
+  card.querySelector(`#vcmeta-${typeId}`).innerHTML = `<span>${next.driver}</span><span class="vehicle-element-badge">${next.element}</span>`;
+  card.classList.remove('card-rerolled');
+  void card.offsetWidth;
+  card.classList.add('card-rerolled');
+}
+
+function randomizeVehicles() {
+  currentVehicles = {};
+  let cards = '';
+
+  VEHICLE_TYPES.forEach((type, i) => {
+    const pool = VEHICLES[type.id];
+    const chosen = pick(pool);
+    currentVehicles[type.id] = { chosen, pool };
+    cards += buildVehicleCard(type, chosen, pool, i * 0.07);
+  });
+
+  document.getElementById('vehicleOutput').innerHTML =
+    `<div class="roster-section"><div class="vehicle-grid">${cards}</div></div>`;
+}
+</script>
